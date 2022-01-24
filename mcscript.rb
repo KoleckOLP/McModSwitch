@@ -1,40 +1,27 @@
 appdata = ENV["APPDATA"]  # gets the path of the roaming folder
 
-file = File.open("#{appdata}\\MC_status.txt")
-mc_status = file.read  # read current status of the .mc folder
+file = File.open("MC_status.txt")
+mc_current = file.read  # reads stored status of .minecraft folder
 
-if ARGV[0] == "-vanilla" || ARGV[0] == "-v"
-    if mc_status == "Vanilla"
-        puts("You are already on Vanilla")
-    else
-        puts("the choice was Vanilla")
-        system("del \"#{appdata}\\.minecraft(YogBox).7z\"")
-        system("7z a -r #{appdata}\\.minecraft.7z #{appdata}\\.minecraft")  # archives current mc dir
-        File.rename("#{appdata}\\.minecraft.7z", "#{appdata}\\.minecraft(YogBox).7z")  # rename the archive version to be YogBox
-        system("rmdir /S /Q #{appdata}\\.minecraft")  # this is potentially harmful :)
-        if File.exist?("#{appdata}\\.minecraft(Vanilla).7z")
-            system("7z x #{appdata}\\.minecraft(Vanilla).7z")
-        else
-            puts("there is no backed up version of Vanilla")
-        end
+mc_switch = ARGV[0]  # archive to switch to
+mc_launcher_location = ARGV[1]  # path to minecraft executable or link
+
+if File.directory?("#{appdata}\\.minecraft")  # if there is a minecraft directory in appdata
+    if File.exist?(".minecraft(#{mc_current}).7z")  # if there is already an archive
+        system("del \".minecraft(#{mc_current}).7z\"")  # delete it
     end
-    File.open("#{appdata}\\MC_status.txt", "w") { |f| f.write "Vanilla" }
-    system("start #{appdata}\\Minecraft.lnk")  # shortcuts in Windows are weird
-elsif ARGV[0] == "-yogbox" || ARGV[0] == "-y"
-    if mc_status == "YogBox"
-        puts("You are already on YogBox")
-    else
-        puts("the choice was YogBox")
-        system("del \"#{appdata}\\.minecraft(Vanilla).7z\"")
-        system("7z a -r #{appdata}\\.minecraft.7z #{appdata}\\.minecraft")  # archives current mc dir
-        File.rename("#{appdata}\\.minecraft.7z", "#{appdata}\\.minecraft(Vanilla).7z")  # rename the archive version to be Vanilla
-        system("rmdir /S /Q #{appdata}\\.minecraft")  # this is potentially harmful :)
-        if File.exist?("#{appdata}\\.minecraft(YogBox).7z")
-            system("7z x #{appdata}\\.minecraft(YogBox).7z")
-        else
-            puts("there is no backed up version of YogBox")
-        end
-    end
-    File.open("MC_status.txt", "w") { |f| f.write "YogBox" }
-    system("#{appdata}\\.minecraft\\MinecraftSP.exe")
+    system("cd /d #{appdata} && 7z a -r .minecraft.7z .minecraft")  # make a new archive
+    system("move #{appdata}\\.minecraft.7z .minecraft(#{mc_current}).7z")  # move & rename the archive
+    system("rmdir /S /Q #{appdata}\\.minecraft")  # delete the current .minecraft dir
+end
+
+archive = File.exist?(".minecraft(#{mc_switch}).7z")
+
+if archive  # check if there is archive
+    system("7z x .minecraft(#{mc_switch}).7z -o\"#{appdata}\"")  # extract the archive to appdata
+end
+
+if archive or (!archive && mc_switch == "Vanilla")  # if there is archive or choice was Vanilla
+    File.open("MC_status.txt", "w") { |f| f.write mc_switch }  # change status to current
+    system("start #{mc_launcher_location}")  # launch game
 end
