@@ -1,4 +1,4 @@
 .idea
-.minecraft(Vanilla).7z
-.minecraft(YogBox).7z
-lol
+*.7z
+*.lnk
+MC_status.txt
